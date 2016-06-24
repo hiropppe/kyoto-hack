@@ -1,0 +1,65 @@
+--- script/ex_hyponymy.sh.orig	2010-09-30 15:37:38.000000000 +0900
++++ script/ex_hyponymy.sh	2015-02-05 03:57:36.287800037 +0900
+@@ -208,7 +208,7 @@
+ # SVM判定
+     if [ $CLASSIFY_SVM == 0 ];
+     then
+-	pecco polyk -lf ${WORK_DIR}/${NAME}.def2.trim3.del_same.del_undef.del_html.trim.testdata.ref -tf ${WORK_DIR}/${NAME}.def2.trim3.del_same.del_undef.del_html.trim.testdata.ref -m data_def/zlearn_def -v 2 > ${WORK_DIR}/res_def_${NAME}
++	pecco -t 1 -e ${WORK_DIR}/${NAME}.def2.trim3.del_same.del_undef.del_html.trim.testdata.ref data_def/zlearn_def ${WORK_DIR}/${NAME}.def2.trim3.del_same.del_undef.del_html.trim.testdata.ref -O 2 > ${WORK_DIR}/res_def_${NAME}
+     else
+ 	svm_classify -V ${WORK_DIR}/${NAME}.def2.trim3.del_same.del_undef.del_html.trim.testdata.ref data_def/zlearn_def > ${WORK_DIR}/res_def_${NAME}
+     fi
+@@ -245,10 +245,7 @@
+ 	rm ${WORK_DIR}/res_def_${NAME}_withWD
+ 	if [ $CLASSIFY_SVM == 0 ];
+ 	then
+-	    rm data_def/zlearn_def.bin
+-	    rm data_def/zlearn_def.r0.s0.af
+-	    rm data_def/zlearn_def.r0.s0.alpha
+-	    rm data_def/zlearn_def.r0.s0.nedan
++	    rm data_def/zlearn_def.*
+ 	fi
+     fi
+ 
+@@ -274,7 +271,7 @@
+ # SVM判定
+     if [ $CLASSIFY_SVM == 0 ];
+     then
+-	pecco polyk -lf ${WORK_DIR}/${NAME}.ctg.del_stab.del_undefine.del_list.del_same.del_undef.del_empty.testdata.ref -tf ${WORK_DIR}/${NAME}.ctg.del_stab.del_undefine.del_list.del_same.del_undef.del_empty.testdata.ref -m data_cat/zlearn_cat -v 2 > ${WORK_DIR}/res_cat_${NAME}
++	pecco -t 1 -e ${WORK_DIR}/${NAME}.ctg.del_stab.del_undefine.del_list.del_same.del_undef.del_empty.testdata.ref data_cat/zlearn_cat ${WORK_DIR}/${NAME}.ctg.del_stab.del_undefine.del_list.del_same.del_undef.del_empty.testdata.ref -O 2 > ${WORK_DIR}/res_cat_${NAME}
+     else
+ 	svm_classify -V ${WORK_DIR}/${NAME}.ctg.del_stab.del_undefine.del_list.del_same.del_undef.del_empty.testdata.ref data_cat/zlearn_cat > ${WORK_DIR}/res_cat_${NAME}
+     fi
+@@ -310,10 +307,7 @@
+ 	rm ${WORK_DIR}/res_cat_${NAME}_withWD
+ 	if [ $CLASSIFY_SVM == 0 ];
+ 	then
+-	    rm data_cat/zlearn_cat.bin
+-	    rm data_cat/zlearn_cat.r0.s0.af
+-	    rm data_cat/zlearn_cat.r0.s0.alpha
+-	    rm data_cat/zlearn_cat.r0.s0.nedan
++	    rm data_cat/zlearn_cat.*
+ 	fi
+     fi
+     echo Finished CATEGORY
+@@ -348,7 +342,7 @@
+ # SVM判定
+     if [ $CLASSIFY_SVM == 0 ];
+     then
+-	pecco polyk -lf ${WORK_DIR}/${NAME}.hier.all.rm_html.del.DendS.DendQ2.DSym.S2T.all_layer.Ditiran.DES.only.testdata.ref -tf ${WORK_DIR}/${NAME}.hier.all.rm_html.del.DendS.DendQ2.DSym.S2T.all_layer.Ditiran.DES.only.testdata.ref -m ${DATA_DIR}/zlearn -v 2 > ${WORK_DIR}/res_hier_${NAME}
++	pecco -t 1 -e ${WORK_DIR}/${NAME}.hier.all.rm_html.del.DendS.DendQ2.DSym.S2T.all_layer.Ditiran.DES.only.testdata.ref ${DATA_DIR}/zlearn ${WORK_DIR}/${NAME}.hier.all.rm_html.del.DendS.DendQ2.DSym.S2T.all_layer.Ditiran.DES.only.testdata.ref -O 2 > ${WORK_DIR}/res_hier_${NAME}
+     else
+ 	svm_classify -V ${WORK_DIR}/${NAME}.hier.all.rm_html.del.DendS.DendQ2.DSym.S2T.all_layer.Ditiran.DES.only.testdata.ref ${DATA_DIR}/zlearn > ${WORK_DIR}/res_hier_${NAME}
+     fi
+@@ -384,10 +378,7 @@
+ 	rm ${WORK_DIR}/res_hier_${NAME}_withWD
+ 	if [ $CLASSIFY_SVM == 0 ];
+ 	then
+-	    rm ${DATA_DIR}/zlearn.bin
+-	    rm ${DATA_DIR}/zlearn.r0.s0.af
+-	    rm ${DATA_DIR}/zlearn.r0.s0.alpha
+-	    rm ${DATA_DIR}/zlearn.r0.s0.nedan
++	    rm ${DATA_DIR}/zlearn.*
+ 	fi
+     fi
+     echo Finished HIERARCHY

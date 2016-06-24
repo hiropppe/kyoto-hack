@@ -1,0 +1,11 @@
+--- MeCab_wrap.cpp.orig      2016-06-13 16:22:29.098627475 +0900
++++ MeCab_wrap.cpp      2016-06-13 16:26:40.866601006 +0900
+@@ -1856,7 +1856,7 @@
+ 
+ /* Workaround for ruby1.9.x */
+ #if defined SWIGRUBY
+-#include "ruby/version.h"
++#include <version.h>
+ #if RUBY_API_VERSION_CODE >= 10900
+ #include "ruby/encoding.h"
+ #define rb_str_new rb_external_str_new
