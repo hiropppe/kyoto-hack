@@ -9,16 +9,39 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 
 import re
 import gzip
-import sqlite3
 
 import Levenshtein
 
 import pandas as pd
 import pandas.io.sql as sql
 
+from pysqlite2 import dbapi2 as sqlite
+
+
 sql_pref_codes = "SELECT DISTINCT pref_code FROM GeoCollection ORDER BY pref_code"
 sql_geo_hashes = "SELECT DISTINCT geo_hash FROM GeoCollection WHERE pref_code = '%s' ORDER BY geo_hash"
-sql_hash = "SELECT * FROM GeoCollection WHERE geo_hash = '%s' AND delete_flag = 0 ORDER BY id"
+sql_hash = """
+SELECT
+    id,
+    source_id,
+    source_type,
+    name,
+    uri,
+    address,
+    geo_type,
+    geo_hash,
+    pref_code,
+    region_code,
+    ASTEXT(geo_point) `geo_point`,
+    coordinates
+FROM
+    GeoCollection
+WHERE
+    geo_hash = '%s'
+AND delete_flag = 0
+ORDER BY
+    id
+"""
 
 import itertools
 
@@ -36,7 +59,7 @@ if 2 < len(sys.argv) and sys.argv[1] == '-d':
 else:
   geo_db = os.path.dirname(os.path.abspath(__file__)) + '/../geo.db'
 
-conn = sqlite3.connect(geo_db, isolation_level=None)
+conn = sqlite.connect(geo_db, isolation_level=None)
 script = transaction.Script(conn)
 
 re_parentheses_id2title = re.compile(r"\((\d+),\d+,'?([^,']+)'?,[^\)]+\)")
@@ -101,8 +124,7 @@ def exec_nayose(geo_hash):
       'geo_hash': v['geo_hash'],
       'pref_code': v['pref_code'],
       'region_code': v['region_code'],
-      'latitude': v['latitude'],
-      'longitude': v['longitude'],
+      'geo_point': v['geo_point'],
       'coordinates': v['coordinates']
     }
 

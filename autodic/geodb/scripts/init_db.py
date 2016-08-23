@@ -7,12 +7,17 @@ if len(sys.argv) < 2:
 else:
   db = sys.argv[1]
 
-import sqlite3
 
-db = sqlite3.connect(db, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
-sqlite3.dbapi2.converters['DATETIME'] = sqlite3.dbapi2.converters['TIMESTAMP']
+from pysqlite2 import dbapi2 as sqlite
 
-db.execute("""
+conn = sqlite.connect(db, detect_types=sqlite.PARSE_DECLTYPES|sqlite.PARSE_COLNAMES)
+sqlite.converters['DATETIME'] = sqlite.converters['TIMESTAMP']
+
+conn.enable_load_extension(True)
+conn.execute("SELECT load_extension('/usr/local/lib/mod_spatialite.so')")
+conn.execute("SELECT InitSpatialMetaData()")
+
+conn.execute("""
   CREATE TABLE IF NOT EXISTS Geo (
     geo_id INTEGER PRIMARY KEY AUTOINCREMENT,
     uri TEXT,
@@ -22,8 +27,6 @@ db.execute("""
     geo_hash TEXT,
     pref_code TEXT,
     region_code TEXT,
-    latitude REAL,
-    longitude REAL,
     coordinates TEXT,
     insert_datetime DATETIME DEFAULT (DATETIME('now', 'localtime')),
     update_datetime DATETIME DEFAULT (DATETIME('now', 'localtime')),
@@ -31,7 +34,7 @@ db.execute("""
   )
 """)
 
-db.execute("""
+conn.execute("""
   CREATE TABLE IF NOT EXISTS Alias (
     alias_id INTEGER PRIMARY KEY AUTOINCREMENT,
     geo_id INTEGER,
@@ -43,7 +46,7 @@ db.execute("""
   )
 """)
 
-db.execute("""
+conn.execute("""
   CREATE TABLE IF NOT EXISTS GeoCollection (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     geo_id INTEGER,
@@ -56,8 +59,6 @@ db.execute("""
     geo_hash TEXT,
     pref_code TEXT,
     region_code TEXT,
-    latitude REAL,
-    longitude REAL,
     coordinates TEXT,
     insert_datetime DATETIME DEFAULT (DATETIME('now', 'localtime')),
     update_datetime DATETIME DEFAULT (DATETIME('now', 'localtime')),
@@ -66,4 +67,7 @@ db.execute("""
   )
 """)
 
-db.close()
+conn.execute("SELECT AddGeometryColumn('Geo', 'geo_point', 0, 'POINT', 'XY')")
+conn.execute("SELECT AddGeometryColumn('GeoCollection', 'geo_point', 0, 'POINT', 'XY')")
+
+conn.close()

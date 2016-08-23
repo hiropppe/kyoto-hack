@@ -19,16 +19,17 @@ from tinydb import TinyDB, Query
 from tinydb.storages import JSONStorage
 from tinydb.middlewares import CachingMiddleware
 
+from pysqlite2 import dbapi2 as sqlite
+
 import transaction 
 
-import sqlite3
 
 if 2 < len(sys.argv) and sys.argv[1] == '-d':
   geo_db = sys.argv[2]
 else:
   geo_db = os.path.dirname(os.path.abspath(__file__)) + '/../geo.db'
 
-conn = sqlite3.connect(geo_db)
+conn = sqlite.connect(geo_db)
 script = transaction.Script(conn)
 
 re_geocoord = re.compile(ur'<http://ja.dbpedia.org/resource/(.+?)> <http://www.georss.org/georss/point> "(.+?)"')

@@ -10,7 +10,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 from tqdm import tqdm
 from tinydb import TinyDB
 
-import sqlite3
+from pysqlite2 import dbapi2 as sqlite
+
 import transaction
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -20,7 +21,7 @@ if 2 < len(sys.argv) and sys.argv[1] == '-d':
 else:
   geo_db = base_dir + '/../geo.db'
 
-conn = sqlite3.connect(geo_db)
+conn = sqlite.connect(geo_db)
 script = transaction.Script(conn)
 
 db = TinyDB(base_dir + '/place.json')

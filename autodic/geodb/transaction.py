@@ -9,6 +9,9 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 
 from geocoord import Geocoord
 
+import pysqlite2
+
+
 class Script(object):
 
   def __init__(self, conn):
@@ -18,6 +21,9 @@ class Script(object):
     self.cur = conn.cursor()
     self.geohash_precision = 5 
     self.geocoorder = Geocoord(self.geohash_precision)
+    
+    self.conn.enable_load_extension(True)
+    self.conn.execute("SELECT load_extension('/usr/local/lib/mod_spatialite.so')")
 
   def truncate_geo(self):
     self.cur.execute('delete from Alias')
@@ -33,8 +39,7 @@ class Script(object):
         geo_hash,
         pref_code,
         region_code,
-        latitude,
-        longitude,
+        geo_point,
         coordinates
       ) VALUES (
         :name,
@@ -44,8 +49,7 @@ class Script(object):
         :geo_hash,
         :pref_code,
         :region_code,
-        :latitude,
-        :longitude,
+        GeomFromText(:geo_point),
         :coordinates
       )
     """, geo)
@@ -73,11 +77,12 @@ class Script(object):
 
     item.update({
       'geo_hash': Geohash.encode(item['latitude'], item['longitude'], precision=self.geohash_precision),
+      'geo_point': 'POINT(%13.10f %13.10f)' % (item['longitude'], item['latitude']),
       'pref_code': pref_code,
       'region_code': region_code,
       'now': datetime.datetime.now()
     })
-    
+
     result = self.cur.execute("""
       INSERT OR IGNORE INTO GeoCollection (
         source_id,
@@ -89,8 +94,7 @@ class Script(object):
         geo_hash,
         pref_code,
         region_code,
-        latitude,
-        longitude,
+        geo_point,
         coordinates
       ) VALUES (
         :source_id,
@@ -102,8 +106,7 @@ class Script(object):
         :geo_hash,
         :pref_code,
         :region_code,
-        :latitude,
-        :longitude,
+        GeomFromText(:geo_point),
         :coordinates
       )
       """, item
@@ -119,8 +122,7 @@ class Script(object):
           geo_hash = :geo_hash,
           pref_code = :pref_code,
           region_code = :region_code,
-          latitude = :latitude,
-          longitude = :longitude,
+          geo_point = GeomFromText(:geo_point),
           coordinates = :coordinates,
           update_datetime = :now        
         WHERE

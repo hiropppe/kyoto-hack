@@ -11,8 +11,8 @@ import gzip
 
 from collections import defaultdict
 from tqdm import tqdm
+from pysqlite2 import dbapi2 as sqlite
 
-import sqlite3
 import argparse
 
 import transaction 
@@ -31,7 +31,7 @@ args = vars(parser.parse_args())
 
 dump_file = args['dump_file']
 
-conn = sqlite3.connect(args['geo_db'])
+conn = sqlite.connect(args['geo_db'])
 script = transaction.Script(conn)
 
 with gzip.GzipFile(dump_file) as fd:
