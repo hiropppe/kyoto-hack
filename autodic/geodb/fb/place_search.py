@@ -37,7 +37,7 @@ for i, l in enumerate(tqdm(eki_data[begin:])):
       if 'error' in page:
         print(page)
         if page['error']['code'] == 190:
-          sys.stderr.write('Access Token invalidated !! Exit at line %d\n' % (begin+i))
+          sys.stderr.write('Access Token invalidated !! Exit at line %d, eki %s %s\n' % (begin+i, cols[0], cols[2]))
           sys.exit(-1) 
         else:
           continue
