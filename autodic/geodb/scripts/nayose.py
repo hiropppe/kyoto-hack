@@ -18,13 +18,34 @@ import pandas.io.sql as sql
 from pysqlite2 import dbapi2 as sqlite
 
 
-sql_pref_codes = "SELECT DISTINCT pref_code FROM GeoCollection ORDER BY pref_code"
-sql_geo_hashes = "SELECT DISTINCT geo_hash FROM GeoCollection WHERE pref_code = '%s' ORDER BY geo_hash"
+sql_pref_codes = """
+SELECT
+    DISTINCT
+    pref_code
+FROM
+    GeoExtern
+ORDER BY
+    pref_code
+"""
+
+sql_geo_hashes = """
+SELECT
+    DISTINCT
+    geo_hash
+FROM
+    GeoExtern
+WHERE
+    pref_code = '%s'
+ORDER BY
+    geo_hash
+"""
+
 sql_hash = """
 SELECT
-    id,
-    source_id,
-    source_type,
+    extern_id,
+    data_hash,
+    data_id,
+    geo_id,
     name,
     uri,
     address,
@@ -33,14 +54,14 @@ SELECT
     pref_code,
     region_code,
     ASTEXT(geo_point) `geo_point`,
-    coordinates
+    datasource
 FROM
-    GeoCollection
+    GeoExtern
 WHERE
     geo_hash = '%s'
 AND delete_flag = 0
 ORDER BY
-    id
+    extern_id
 """
 
 import itertools
@@ -70,7 +91,6 @@ from tqdm import tqdm
 def main(args):
   global r2t, t2r
   r2t, t2r = get_redirect_dict()
-  script.truncate_geo()
 
   pref_df = sql.read_sql(sql_pref_codes, conn)
   for pref_code in pref_df['pref_code'].values:
@@ -114,9 +134,10 @@ def exec_nayose(geo_hash):
   df = sql.read_sql(sql_hash % (geo_hash), conn)
   for k, v in df.iterrows():
     g = {
-      'id': v['id'],
-      'source_id': v['source_id'],
-      'source_type': v['source_type'],
+      'extern_id': v['extern_id'],
+      'data_hash': v['data_hash'],
+      'data_id': v['data_id'],
+      'geo_id': v['geo_id'],
       'name': v['name'],
       'uri': v['uri'],
       'address': v['address'],
@@ -125,20 +146,18 @@ def exec_nayose(geo_hash):
       'pref_code': v['pref_code'],
       'region_code': v['region_code'],
       'geo_point': v['geo_point'],
-      'coordinates': v['coordinates']
+      'datasource': v['datasource'],
     }
 
     name = re_alias.sub('', v['name'])
-    geo_cluster_dict[name][g['source_type']] = g
+
+    geo_cluster_dict[name][g['datasource']] = g
   
   for name, cluster in geo_cluster_dict.iteritems():
-    if not name in r2t:
-      geo, aliase = inspect_geo_cluster(cluster)
-      script.insert_geo(geo, cluster.values(), aliase)
+    geo, aliase = inspect_geo_cluster(name, cluster)
+    script.insert_geo(geo, cluster.values(), aliase)
 
-def inspect_geo_cluster(cluster):
-  names = set() 
-  
+def inspect_geo_cluster(name, cluster):
   if 'dbpedia' in cluster:
     geo = cluster['dbpedia']
   elif 'wikidata' in cluster:
@@ -146,26 +165,19 @@ def inspect_geo_cluster(cluster):
   else:
     geo = cluster['fb']
 
-  for v in cluster.itervalues():
-    names.add(v['name'])
-  
   nlen = len(geo['name'])
-  #if geo['name'] in r2t:
-  #  tlen = len(r2t[geo['name']])
-  #  d = Levenshtein.distance(geo['name'], r2t[geo['name']])
-  #  if d < 0.4 * max(nlen, tlen):
-  #    geo['name'] = r2t[geo['name']]
-  #elif geo['name'] in t2r:
+  
+  alias = list() 
   if geo['name'] in t2r:
     for name in t2r[geo['name']]:
       d = Levenshtein.distance(geo['name'], name)
       rlen = len(name)
       if d < 0.4 * max(nlen, rlen):
-        names.add(name)
+        alias.append(name)
   else:
     pass
 
-  return geo, names - {geo['name']}
+  return geo, alias 
 
 if __name__ == '__main__':
   main(sys.argv)

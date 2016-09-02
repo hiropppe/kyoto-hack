@@ -97,7 +97,7 @@ while(row):
     if length < len(row[1]) and not (row[1] in name_set) and row[1][:length] in name_set:
       try:
         #print('%s -> %s' % (row[1], row[1][:length]))
-        conn.execute("INSERT INTO Alias (geo_id, name) VALUES (:geo_id, :name)",
+        conn.execute("INSERT OR IGNORE INTO Alias (geo_id, name) VALUES (:geo_id, :name)",
             {'geo_id': row[0], 'name': row[1][:length]})
       except IntegrityError:
         pass

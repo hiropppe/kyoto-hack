@@ -54,13 +54,12 @@ with gzip.GzipFile(dump_file) as fd:
         lat = d['claims']['P625'][0]['mainsnak']['datavalue']['value']['latitude']
 
         item = {
-          'source_id': d['id'],
-          'source_type': 'wikidata',
+          'data_id': d['id'],
+          'datasource': 'wikidata',
           'name': d['labels']['ja']['value'],
           'uri': os.path.join('https://www.wikidata.org/wiki/', d['id']),
           'address': '',
           'geo_type': 'Point',
-          'coordinates': '[%13.10f, %13.10f]' % (lon, lat),
           'latitude': lat,
           'longitude': lon
         }

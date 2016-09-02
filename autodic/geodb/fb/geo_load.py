@@ -29,21 +29,19 @@ db = TinyDB(base_dir + '/place.json')
 for item in tqdm(db.all()):
   try:
     db_item = {
-      'source_type': 'fb',
-      'source_id': item['id'],
+      'datasource': 'fb',
+      'data_id': item['id'],
       'name': item['name'],
       'uri': os.path.join('https://www.facebook.com/pages/', item['name'], item['id']),
       'address': item['location']['street'],
       'geo_type': 'Point',
-      'coordinates': '[%13.10f, %13.10f]' % (item['location']['longitude'], item['location']['latitude']),
       'latitude': item['location']['latitude'],
       'longitude': item['location']['longitude']
     }
     script.insert_or_update(db_item) 
   except Exception, details:
-    raise
-    #sys.stderr.write('%s\n' % details)
-    #continue
+    sys.stderr.write('%s\n' % details)
+    continue
 
 conn.commit()
 conn.close()

@@ -49,10 +49,9 @@ def extract_from_geocoord(dump_file):
         lat_lon = match.group(2).split()
         
         item = {
-          'source_id': subject,
+          'data_id': subject,
           'name': subject,
           'uri': os.path.join('http://ja.dbpedia.org/page/', subject),
-          'coordinates': '[%13.10f, %13.10f]' % (float(lat_lon[1]), float(lat_lon[0])),
           'latitude': float(lat_lon[0]),
           'longitude': float(lat_lon[1])
         }
@@ -77,10 +76,9 @@ def extract_from_infobox(dump_file):
               lat = float(current_geo_info[0] + current_geo_info[1]/60 + current_geo_info[2]/3600)
               lon = float(current_geo_info[3] + current_geo_info[4]/60 + current_geo_info[5]/3600)
               item = {
-                'source_id': current_subject,
+                'data_id': current_subject,
                 'name': current_subject,
                 'uri': os.path.join('http://ja.dbpedia.org/page/', current_subject),
-                'coordinates': '[%13.10f, %13.10f]' % (lon, lat),
                 'latitude': lat,
                 'longitude': lon
               }
@@ -108,7 +106,7 @@ def update(dump_file, make_func):
   if dump_file:
     for item in make_func(dump_file):
       item.update({
-        'source_type': 'dbpedia',
+        'datasource': 'dbpedia',
         'address': '',
         'geo_type': 'Point',
       })

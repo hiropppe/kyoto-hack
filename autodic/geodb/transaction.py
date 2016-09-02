@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 
+import binascii
 import datetime
 import Geohash
 
@@ -25,44 +26,73 @@ class Script(object):
     self.conn.enable_load_extension(True)
     self.conn.execute("SELECT load_extension('/usr/local/lib/mod_spatialite.so')")
 
-  def truncate_geo(self):
-    self.cur.execute('delete from Alias')
-    self.cur.execute('delete from Geo')
+  def insert_geo(self, geo, geo_externs, aliases):
+    current_geo_ids = [geo_extern['geo_id'] for geo_extern in geo_externs if geo_extern['geo_id']]
+    if current_geo_ids:
+        geo_id = sorted(current_geo_ids)[0]
+    else:
+        geo_id = None
 
-  def insert_geo(self, geo, geo_children, aliases):
-    result = self.cur.execute("""
-      INSERT INTO Geo (
-        name,
-        uri,
-        address,
-        geo_type,
-        geo_hash,
-        pref_code,
-        region_code,
-        geo_point,
-        coordinates
-      ) VALUES (
-        :name,
-        :uri,
-        :address,
-        :geo_type,
-        :geo_hash,
-        :pref_code,
-        :region_code,
-        GeomFromText(:geo_point),
-        :coordinates
-      )
-    """, geo)
+    if not geo_id:
+        result = self.cur.execute("""
+            INSERT INTO Geo (
+                name,
+                uri,
+                address,
+                geo_type,
+                geo_hash,
+                pref_code,
+                region_code,
+                geo_point
+            ) VALUES (
+                :name,
+                :uri,
+                :address,
+                :geo_type,
+                :geo_hash,
+                :pref_code,
+                :region_code,
+                GeomFromText(:geo_point)
+            )
+            """, geo)
     
-    geo_id = result.lastrowid
+        geo_id = result.lastrowid
+    else:
+        geo_externs = [geo_extern for geo_extern in geo_externs if not geo_extern['geo_id']]
+        
+        self.cur.execute("""
+            UPDATE
+                Geo
+            SET
+                name = :name,
+                uri = :uri,
+                address = :address,
+                geo_type = :geo_type,
+                pref_code = :pref_code,
+                region_code = :region_code,
+                geo_point = GeomFromText(:geo_point),
+                update_datetime = DATETIME('now', '+09:00:00')
+            WHERE
+                geo_id = :geo_id
+            AND modified = 0
+        """, geo)
 
+    for each_extern in geo_externs:
+        self.cur.execute("""
+            UPDATE
+                GeoExtern
+            SET
+                geo_id = :geo_id,
+                update_datetime = DATETIME('now', '+09:00:00')
+            WHERE
+                extern_id = :extern_id
+            """,
+            {'geo_id': geo_id, 'extern_id': each_extern['extern_id']}
+        )
+        
     for aliase in aliases:
-      self.cur.execute("INSERT INTO Alias(geo_id, name) VALUES (:geo_id, :name)",
-          {'geo_id': geo_id, 'name': aliase})
-    
-    for geo_child in geo_children:
-      self.cur.execute("UPDATE GeoCollection SET geo_id = :geo_id WHERE id = :id",
-          {'geo_id': geo_id, 'id': geo_child['id']})
+        self.cur.execute("INSERT OR IGNORE INTO Alias(geo_id, name) VALUES (:geo_id, :name)",
+        {'geo_id': geo_id, 'name': aliase})
 
     self.lazy_commit()
 
@@ -76,58 +106,60 @@ class Script(object):
       region_code = ''
 
     item.update({
+      'data_hash': '%08X' % (binascii.crc32(''.join([item['datasource'], item['data_id']]).encode('utf8')) & 0xffffffff),
       'geo_hash': Geohash.encode(item['latitude'], item['longitude'], precision=self.geohash_precision),
       'geo_point': 'POINT(%13.10f %13.10f)' % (item['longitude'], item['latitude']),
       'pref_code': pref_code,
-      'region_code': region_code,
-      'now': datetime.datetime.now()
+      'region_code': region_code
     })
 
     result = self.cur.execute("""
-      INSERT OR IGNORE INTO GeoCollection (
-        source_id,
-        source_type,
-        name,
+      INSERT OR IGNORE INTO GeoExtern (
+        data_hash,
+        data_id,
+        datasource,
         uri,
+        name,
         address,
         geo_type,
         geo_hash,
         pref_code,
         region_code,
-        geo_point,
-        coordinates
+        geo_point
       ) VALUES (
-        :source_id,
-        :source_type,
-        :name,
+        :data_hash,
+        :data_id,
+        :datasource,
         :uri,
+        :name,
         :address,
         :geo_type,
         :geo_hash,
         :pref_code,
         :region_code,
-        GeomFromText(:geo_point),
-        :coordinates
+        GeomFromText(:geo_point)
       )
       """, item
     )
 
     if result.rowcount == 0:
       self.cur.execute("""
-        UPDATE GeoCollection
-          name = :name,
+        UPDATE
+          GeoExtern
+        SET
+          datasource = :datasource,
           uri = :uri,
+          name = :name,
           address = :address,
           geo_type = :geo_type,
           geo_hash = :geo_hash,
           pref_code = :pref_code,
           region_code = :region_code,
           geo_point = GeomFromText(:geo_point),
-          coordinates = :coordinates,
-          update_datetime = :now        
+          update_datetime = DATETIME('now', '+09:00:00')        
         WHERE
-            source_id = :source_id,
-        AND source_type = :source_type
+            data_hash = :data_hash
+        AND data_id = :data_id
         """, item
       )
     

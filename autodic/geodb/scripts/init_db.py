@@ -23,11 +23,11 @@ conn.execute("""
     uri TEXT,
     name TEXT,
     address TEXT,
-    geo_type INTEGER,
+    geo_type TEXT,
     geo_hash TEXT,
     pref_code TEXT,
     region_code TEXT,
-    coordinates TEXT,
+    modified INTEGER,
     insert_datetime DATETIME DEFAULT (DATETIME('now', 'localtime')),
     update_datetime DATETIME DEFAULT (DATETIME('now', 'localtime')),
     delete_flag INTEGER DEFAULT 0
@@ -37,29 +37,31 @@ conn.execute("""
 conn.execute("""
   CREATE TABLE IF NOT EXISTS Alias (
     alias_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    geo_id INTEGER,
     name TEXT,
+    geo_id INTEGER,
+    extern_id TEXT,
     insert_datetime DATETIME DEFAULT (DATETIME('now', 'localtime')),
     update_datetime DATETIME DEFAULT (DATETIME('now', 'localtime')),
     delete_flag INTEGER DEFAULT 0,
-    FOREIGN KEY(geo_id) REFERENCES Geo(geo_id)
+    FOREIGN KEY(geo_id) REFERENCES Geo(geo_id),
+    FOREIGN KEY(extern_id) REFERENCES GeoExtern(extern_id)
   )
 """)
 
 conn.execute("""
-  CREATE TABLE IF NOT EXISTS GeoCollection (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS GeoExtern (
+    extern_id INTEGER PRIMARY KEY,
+    data_hash TEXT,
+    data_id TEXT,
     geo_id INTEGER,
-    source_id TEXT,
-    source_type TEXT,
     uri TEXT,
     name TEXT,
     address TEXT,
-    geo_type INTEGER,
+    geo_type TEXT,
     geo_hash TEXT,
     pref_code TEXT,
     region_code TEXT,
-    coordinates TEXT,
+    datasource TEXT,
     insert_datetime DATETIME DEFAULT (DATETIME('now', 'localtime')),
     update_datetime DATETIME DEFAULT (DATETIME('now', 'localtime')),
     delete_flag INTEGER DEFAULT 0,
@@ -67,7 +69,10 @@ conn.execute("""
   )
 """)
 
+conn.execute("CREATE UNIQUE INDEX UNIQUE_IDX_Alias ON Alias(name, geo_id)")
+conn.execute("CREATE UNIQUE INDEX UNIQUE_IDX_GEO_EXTERN ON GeoExtern(data_hash, data_id)")
+
 conn.execute("SELECT AddGeometryColumn('Geo', 'geo_point', 0, 'POINT', 'XY')")
-conn.execute("SELECT AddGeometryColumn('GeoCollection', 'geo_point', 0, 'POINT', 'XY')")
+conn.execute("SELECT AddGeometryColumn('GeoExtern', 'geo_point', 0, 'POINT', 'XY')")
 
 conn.close()
