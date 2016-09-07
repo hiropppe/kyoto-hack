@@ -75,7 +75,7 @@ class Script(object):
             WHERE
                 geo_id = :geo_id
             AND modified = 0
-        """, geo)
+        """, geo.update({'geo_id': geo_id}))
 
     for each_extern in geo_externs:
         self.cur.execute("""

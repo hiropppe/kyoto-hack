@@ -18,16 +18,6 @@ import pandas.io.sql as sql
 from pysqlite2 import dbapi2 as sqlite
 
 
-sql_pref_codes = """
-SELECT
-    DISTINCT
-    pref_code
-FROM
-    GeoExtern
-ORDER BY
-    pref_code
-"""
-
 sql_geo_hashes = """
 SELECT
     DISTINCT
@@ -35,7 +25,7 @@ SELECT
 FROM
     GeoExtern
 WHERE
-    pref_code = '%s'
+    delete_flag = 0
 ORDER BY
     geo_hash
 """
@@ -92,15 +82,12 @@ def main(args):
   global r2t, t2r
   r2t, t2r = get_redirect_dict()
 
-  pref_df = sql.read_sql(sql_pref_codes, conn)
-  for pref_code in pref_df['pref_code'].values:
-    if pref_code:
-      hash_df = sql.read_sql(sql_geo_hashes % (pref_code), conn) 
-      pref_tqdm = tqdm(hash_df['geo_hash'].values)
-      pref_tqdm.set_description(pref_code)
-      for geo_hash in pref_tqdm:
-        exec_nayose(geo_hash)
-
+  geo_hash_tqdm = tqdm(sql.read_sql(sql_geo_hashes, conn)['geo_hash'].values)
+  
+  for geo_hash in geo_hash_tqdm:
+    exec_nayose(geo_hash)
+  
+  conn.commit()
   conn.close()
 
 def get_redirect_dict():
