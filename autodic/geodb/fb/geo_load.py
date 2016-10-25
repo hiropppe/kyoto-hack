@@ -33,7 +33,7 @@ for item in tqdm(db.all()):
       'data_id': item['id'],
       'name': item['name'],
       'uri': os.path.join('https://www.facebook.com/pages/', item['name'], item['id']),
-      'address': item['location']['street'],
+      'address': item['location']['street'] if 'street' in item['location'] else '',
       'geo_type': 'Point',
       'latitude': item['location']['latitude'],
       'longitude': item['location']['longitude']
