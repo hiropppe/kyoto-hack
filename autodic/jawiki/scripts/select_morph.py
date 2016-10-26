@@ -88,8 +88,8 @@ def main(args):
     for title, redirect in redirect_pbar:
       process(title, redirect)
   finally:
-    write(sorted(single_mrph_words), os.path.join(output_dir, '/single_morph.txt'))
-    write(sorted(multiple_mrph_words), os.path.join(output_dir, '/multiple_morph.txt'))
+    write(sorted(single_mrph_words), os.path.join(output_dir, 'single_morph.txt'))
+    write(sorted(multiple_mrph_words), os.path.join(output_dir, 'multiple_morph.txt'))
 
     # debug basis
     for k, v in debug_container.items():

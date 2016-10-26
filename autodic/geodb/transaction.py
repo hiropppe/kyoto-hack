@@ -59,7 +59,7 @@ class Script(object):
         geo_id = result.lastrowid
     else:
         geo_externs = [geo_extern for geo_extern in geo_externs if not geo_extern['geo_id']]
-        
+        geo.update({'geo_id': geo_id})
         self.cur.execute("""
             UPDATE
                 Geo
@@ -75,7 +75,7 @@ class Script(object):
             WHERE
                 geo_id = :geo_id
             AND modified = 0
-        """, geo.update({'geo_id': geo_id}))
+        """, geo)
 
     for each_extern in geo_externs:
         self.cur.execute("""
